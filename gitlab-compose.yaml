@@ -1,0 +1,59 @@
+# docker-compose.yml
+version: '3.7'
+services:
+  web:
+    image: 'gitlab/gitlab-ce:latest'
+    restart: always
+    hostname: 'gitlab.example.com'
+    container_name: gitlab-ce
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.example.com'  # вот отсюдова он будет пытаться все вычитывать
+    ports:
+      - '8080:80'
+      - '8443:443'
+      - '8822:22'
+      - '8929:8929'
+    volumes:
+      - '$GITLAB_HOME/config:/etc/gitlab'
+      - '$GITLAB_HOME/logs:/var/log/gitlab'
+      - '$GITLAB_HOME/data:/var/opt/gitlab'
+    networks:
+      - gitlab
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine
+    container_name: gitlab-runner
+    restart: always
+    depends_on:
+      - web
+    ports:
+      - '9252:9252'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - '$GITLAB_HOME/gitlab-runner:/etc/gitlab-runner'
+    networks:
+      - gitlab
+
+networks:
+  gitlab:
+    driver: bridge
+
+#cXP8Kg4p7HiEHnZEw2uuReQltSWdbOQntj+HkAQjzOY=
+#docker run --network=gitlab_experiments_gitlab --rm -it -v $GITLAB_HOME/gitlab-runner:/etc/gitlab-runner gitlab/gitlab-runner:alpine register
+
+#docker-compose exec gitlab-runner \
+#gitlab-runner register \
+#--non-interactive \
+#--url http://web/ \
+#--registration-token GR1348941LpUCEj3S4Dmmyyhr9J7J \
+#--executor docker \
+#--description "Sample Runner 2" \
+#--docker-image "docker:stable" \
+#--docker-volumes /var/run/docker.sock:/var/run/docker.sock
+
+
+#                    "Gateway": "192.168.32.1",
+#                    "IPAddress": "192.168.32.2",
+
+
+# https://stackoverflow.com/questions/50325932/gitlab-runner-docker-could-not-resolve-host - тут инфа
